@@ -128,11 +128,11 @@ def new_booking():
     cursor.execute("SELECT * FROM Customer")
     result = cursor.fetchall()
     for row in result:
-       showAllCustomers.append(str(row[0]) + ' ' +  str(row[2]) + ' ' + str(row[3]))
+       showAllCustomers.append('(' + str(row[0]) + ') ' +  str(row[2]) + ' ' + str(row[3]))
     cursor.execute("SELECT * FROM Destination")
     result2 = cursor.fetchall()
     for row in result2:
-       showAllDestinations.append(str(row[0]) + ' ' +  str(row[1]))
+       showAllDestinations.append('(' + str(row[0]) + ') ' +  str(row[1]))
 
 
 
@@ -182,59 +182,87 @@ def new_booking():
 
 def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes):
 
-    CustomerID = bookingCustomers_combo.value.split(' ', 1)[0]
-    CustomerID = int(CustomerID)
+    CustomerID = bookingCustomers_combo.value.split(' ', 1)[0] #Only takes the values before the first space which in this case is the ID
+    CustomerID = int(CustomerID) #Concatenates CustomerID to an integer
 
-    DestinationID = bookingDestination_combo.value.split(' ', 1)[1]
-
-
-    SeatAmount = booking_seatNumber.value
-
-    BookingDate = datetime.today().strftime('%d/%m/%y')
-    print(BookingDate)
-
-    Notes = text_notes.value
-
-    cursor.execute("SELECT TripID FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (DestinationID,))
-    TripID = cursor.fetchall()
-    TripID = [item[0] for item in TripID]
-    TripID = int(TripID.pop(0))
-
-    cursor.execute(("""INSERT INTO Booking(CustomerID, TripID, SeatAmount, BookingDate, Notes) VALUES(?, ?, ?, ?, ?)"""),(CustomerID, TripID, SeatAmount, BookingDate, Notes))
-    db.commit()
+    DestinationID = bookingDestination_combo.value.split(' ', 1)[1] #Only takes the values after the first space which in this case is the Destination Town
 
 
+    SeatAmount = booking_seatNumber.value #Gets the value of the amount of seats the user has put in and then saves it as SeatAmount
 
-    # cursor.execute("""INSERT INTO Booking(CustomerID, TripID, SeatAmount, BookingDate, Notes) VALUES(?,?,?,?,?)"""),(CustomerID, TripID, SeatAmount, BookingDate, Notes)
+    BookingDate = datetime.today().strftime('%d/%m/%y') #Gets the current date of the computer and adds it as a variable.
+
+    Notes = text_notes.value #Gets notes from user input and saves it as the variable Notes
+
+    cursor.execute("SELECT TripID FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (DestinationID,)) #Find the foreign key value for the destinationID inputed by the user that's being stored in the Trip Table and gets the primary key for the trip that they have requested
+    TripID = cursor.fetchall() # Grabs the value entered
+    TripID = [item[0] for item in TripID] #Only gets the first element in the array removing it from the tuple
+    TripID = int(TripID.pop(0)) #Takes it out of the array and concatenates the value to an integer to be saved as the TripID for this booking
+
+    cursor.execute(("""INSERT INTO Booking(CustomerID, TripID, SeatAmount, BookingDate, Notes) VALUES(?, ?, ?, ?, ?)"""),(CustomerID, TripID, SeatAmount, BookingDate, Notes)) #Inserts all the information above into the booking table.
+    db.commit() #Saves the table
+
+
+
 
 
 def new_trip():
-    trip_window = Window (app, title = "New Trip", bg = (253, 71, 74), height= 600)
+    showAllCoaches = []
+    showAllDrivers = []
+    showAllDestinations = []
+
+    cursor.execute("SELECT * FROM Coach")
+    result = cursor.fetchall()
+    for row in result:
+       showAllCoaches.append('(' + str(row[0]) + ') ' +  str(row[1]) + ' Seat Count: ' + str(row[2]))
+
+    cursor.execute("SELECT * FROM Driver")
+    result2 = cursor.fetchall()
+    for row in result2:
+        showAllDrivers.append('(' + str(row[0]) + ') ' + str(row[1]) + ' ' + str(row[2]))
+    cursor.execute("SELECT * FROM Destination")
+    result3 = cursor.fetchall()
+    for row in result3:
+       showAllDestinations.append('(' + str(row[0]) + ') ' +  str(row[1]))
+
+
+    trip_window = Window (app, title = "New Trip", bg = (253, 71, 74), height= 700)
     picture = Picture(trip_window, image="Logo.gif")
 
     text = Text(trip_window, text="Book Trip")
     text.text_color = "white"
     text.text_size = 20
 
-    text = Text(trip_window, text="Date of Trip")
-    text.text_color = "white"
-    trip_dateOfTrip = TextBox(trip_window)
-    trip_dateOfTrip.width = 10
-
     text = Text(trip_window, text="Cost per Person")
     text.text_color = "white"
     trip_cost = TextBox(trip_window)
     trip_cost.width = 7
 
-    text = Text(trip_window, text="Driver")
+    text = Text(trip_window, text="Date of Trip")
     text.text_color = "white"
-    driver_combo = Combo(trip_window, options=["a", "b", "c", "d"])
-    driver_combo.text_color = "white"
+    trip_dateOfTrip = TextBox(trip_window)
+    trip_dateOfTrip.width = 10
+
+    text = Text(trip_window, text="Days")
+    text.text_color = "white"
+    trip_days = TextBox(trip_window)
+    trip_days.width = 3
+
+    text = Text(trip_window, text="Search Destinations")
+    text.text_color = "white"
+    tripDestination_combo = Combo(trip_window, options=showAllDestinations)
+    tripDestination_combo.text_color = "white"
 
     text = Text(trip_window, text="Coach")
     text.text_color = "white"
-    coach_combo = Combo(trip_window, options=["a", "b", "c", "d"])
+    coach_combo = Combo(trip_window, options=showAllCoaches)
     coach_combo.text_color = "white"
+
+    text = Text(trip_window, text="Driver")
+    text.text_color = "white"
+    driver_combo = Combo(trip_window, options=showAllDrivers)
+    driver_combo.text_color = "white"
+
 
     coach_button = PushButton(trip_window, text="Enter")
     coach_button.width = 15

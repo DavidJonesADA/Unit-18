@@ -307,10 +307,11 @@ def new_destination():
 
     text = Text(destination_window, text="Name of Hotel")
     text.text_color = "white"
-    destination_hotel = TextBox(destination_window)
+    destination_hotel = TextBox(destination_window, text="No Hotel")
     destination_hotel.width = 25
+    destination_hotel.text_color = "white"
 
-    destination_button = PushButton(destination_window, text="Enter")
+    destination_button = PushButton(destination_window, text="Enter", command=add_new_destination, args=[destination_town, destination_hotel])
     destination_button.width = 15
     destination_button.text_color = "white"
 
@@ -318,7 +319,12 @@ def new_destination():
     home_button.width = 6
     home_button.text_color = "white"
 
+def add_new_destination(destination_town, destination_hotel):
+    Town = destination_town.value
+    Hotel = destination_hotel.value
 
+    cursor.execute(("""INSERT INTO Destination(Town, Hotel) VALUES(?, ?)"""), (Town, Hotel))
+    db.commit()
 
 def passenger_details():
     details_window = Window (app, title = "Passenger Details", bg = (253, 71, 74))

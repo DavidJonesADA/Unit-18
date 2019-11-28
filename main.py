@@ -166,7 +166,7 @@ def new_booking():
 
     text = Text(booking_window, text="Notes")
     text.text_color = "white"
-    text_notes = TextBox(booking_window, multiline=True)
+    text_notes = TextBox(booking_window, text="No Notes", multiline=True)
     text_notes.width = 25
     text_notes.height = 3
 
@@ -199,7 +199,9 @@ def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_se
     TripID = cursor.fetchall()
     TripID = [item[0] for item in TripID]
     TripID = int(TripID.pop(0))
-    print(TripID)
+
+    cursor.execute(("""INSERT INTO Booking(CustomerID, TripID, SeatAmount, BookingDate, Notes) VALUES(?, ?, ?, ?, ?)"""),(CustomerID, TripID, SeatAmount, BookingDate, Notes))
+    db.commit()
 
 
 

@@ -128,11 +128,11 @@ def new_booking():
     cursor.execute("SELECT * FROM Customer")
     result = cursor.fetchall()
     for row in result:
-       showAllCustomers.append('(' + str(row[0]) + ') ' +  str(row[2]) + ' ' + str(row[3]))
+       showAllCustomers.append(str(row[0]) + ' ' +  str(row[2]) + ' ' + str(row[3]))
     cursor.execute("SELECT * FROM Destination")
     result2 = cursor.fetchall()
     for row in result2:
-       showAllDestinations.append('(' + str(row[0]) + ') ' +  str(row[1]))
+       showAllDestinations.append(str(row[0]) + ' ' +  str(row[1]))
 
 
 
@@ -183,7 +183,7 @@ def new_booking():
 def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes):
 
     CustomerID = bookingCustomers_combo.value.split(' ', 1)[0] #Only takes the values before the first space which in this case is the ID
-    CustomerID = int(CustomerID) #Concatenates CustomerID to an integer
+    CustomerID = int(CustomerID) #Converts CustomerID to an integer
 
     DestinationID = bookingDestination_combo.value.split(' ', 1)[1] #Only takes the values after the first space which in this case is the Destination Town
 
@@ -214,16 +214,16 @@ def new_trip():
     cursor.execute("SELECT * FROM Coach")
     result = cursor.fetchall()
     for row in result:
-       showAllCoaches.append('(' + str(row[0]) + ') ' +  str(row[1]) + ' Seat Count: ' + str(row[2]))
+       showAllCoaches.append(str(row[0]) + ' ' +  str(row[1]) + ' Seat Count: ' + str(row[2]))
 
     cursor.execute("SELECT * FROM Driver")
     result2 = cursor.fetchall()
     for row in result2:
-        showAllDrivers.append('(' + str(row[0]) + ') ' + str(row[1]) + ' ' + str(row[2]))
+        showAllDrivers.append(str(row[0]) + ' ' + str(row[1]) + ' ' + str(row[2]))
     cursor.execute("SELECT * FROM Destination")
     result3 = cursor.fetchall()
     for row in result3:
-       showAllDestinations.append('(' + str(row[0]) + ') ' +  str(row[1]))
+       showAllDestinations.append(str(row[0]) + ' ' +  str(row[1]))
 
 
     trip_window = Window (app, title = "New Trip", bg = (253, 71, 74), height= 700)
@@ -264,13 +264,32 @@ def new_trip():
     driver_combo.text_color = "white"
 
 
-    coach_button = PushButton(trip_window, text="Enter")
+    coach_button = PushButton(trip_window, text="Enter", command=add_new_trip, args=[trip_cost, trip_dateOfTrip, trip_days, tripDestination_combo, coach_combo, driver_combo])
     coach_button.width = 15
     coach_button.text_color = "white"
 
     home_button = PushButton(trip_window, text="Home", align="bottom", command=trip_window.destroy)
     home_button.width = 6
     home_button.text_color = "white"
+
+def add_new_trip(trip_cost, trip_dateOfTrip, trip_days, tripDestination_combo, coach_combo, driver_combo):
+    CostPerPerson = trip_cost.value
+    DateOfTrip = trip_dateOfTrip.value
+    Days = trip_days.value
+
+
+    DestinationID = tripDestination_combo.value.split(' ', 1)[0] # Only takes in the values before the first space in the string to get the DestinationID
+    DestinationID = int(DestinationID) # Converts DestinationID to integer
+    CoachID = coach_combo.value.split(' ', 1)[0] # Only takes in the values before the first space in the string to get the CoachID
+    CoachID = int(CoachID) # Converts CoachID to integer
+    DriverID = driver_combo.value.split(' ', 1)[0] # Only takes in the values before the first space in the string to get the DriverID
+    DriverID = int(DriverID) # Converts DriverID to integer
+
+    cursor.execute(("""INSERT INTO Trip(CostPerPerson, DateOfTrip, Days, DestinationID, CoachID, DriverID) VALUES(?, ?, ?, ?, ?, ?)"""),(CostPerPerson, DateOfTrip, Days, DestinationID, CoachID, DriverID)) #Inserts all the information above into the booking table.
+    db.commit() #Saves the table
+
+
+
 
 
 def new_destination():

@@ -17,6 +17,9 @@ for name in res:
     print (name[1])
 
 
+
+
+
 def tickboxes():
     if requirements_checkbox.value == 1:
         requirements_text.enable()
@@ -115,7 +118,22 @@ def add_new_customer(customer_window, first_name, last_name, address1, address2,
 
 
 
-def add_booking():
+def new_booking():
+    showAllCustomers = []
+    showAllDestinations = []
+
+    cursor.execute("SELECT * FROM Customer")
+    result = cursor.fetchall()
+    for row in result:
+       showAllCustomers.append(str(row[0]) + ' ' +  str(row[2]) + ' ' + str(row[3]))
+    cursor.execute("SELECT * FROM Destination")
+    result2 = cursor.fetchall()
+    for row in result2:
+       showAllDestinations.append(str(row[0]) + ' ' +  str(row[1]))
+
+
+
+
     booking_window = Window (app, title = "Add Booking", bg = (253, 71, 74), height = 600)
     picture = Picture(booking_window, image="Logo.gif")
 
@@ -125,10 +143,17 @@ def add_booking():
 
 
 
-    text = Text(booking_window, text="Destination")
+    text = Text(booking_window, text="Search Customers")
     text.text_color = "white"
-    bookingDestination_combo = Combo(booking_window, options=["a", "b", "c", "d"])
+    bookingCustomers_combo = Combo(booking_window, options=showAllCustomers)
+    bookingCustomers_combo.text_color = "white"
+
+    text = Text(booking_window, text="Search Destinations")
+    text.text_color = "white"
+    bookingDestination_combo = Combo(booking_window, options=showAllDestinations)
     bookingDestination_combo.text_color = "white"
+
+
 
 
     text = Text(booking_window, text="Number of seats required")
@@ -144,7 +169,7 @@ def add_booking():
 
 
 
-    booking_button = PushButton(booking_window, text="Enter")
+    booking_button = PushButton(booking_window, text="Enter", command=add_new_booking, args=[bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes])
     booking_button.width = 15
     booking_button.text_color = "white"
 
@@ -152,6 +177,11 @@ def add_booking():
     home_button.width = 6
     home_button.text_color = "white"
 
+def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes):
+    CustomerID = bookingCustomers_combo.value.split(' ', 1)[0]
+    CustomerID = int(CustomerID)
+    print(type(CustomerID))
+    print(CustomerID)
 
 def new_trip():
     trip_window = Window (app, title = "New Trip", bg = (253, 71, 74), height= 600)
@@ -316,7 +346,7 @@ picture = Picture(app, image="Logo.gif")
 
 submit = PushButton(app, text="Add Customer", command=new_customer)
 submit.text_color = "white"
-submit = PushButton(app, text="Book Coach", command=add_booking)
+submit = PushButton(app, text="Book Coach", command=new_booking)
 submit.text_color = "white"
 submit = PushButton(app, text="Add Trip", command=new_trip)
 submit.text_color = "white"

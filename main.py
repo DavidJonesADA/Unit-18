@@ -1,5 +1,8 @@
 from guizero import *
 import sqlite3
+from datetime import datetime
+
+
 
 
 with sqlite3.connect("Silver Dawn Data.db") as db:
@@ -55,15 +58,15 @@ def new_customer():
     address2 = TextBox(customer_window)
     address2.width = 40
 
-    text = Text(customer_window, text= "Post Code")
-    text.text_color = "white"
-    post_code = TextBox(customer_window)
-    post_code.width = 15
-
     text = Text(customer_window, text= "City")
     text.text_color = "white"
     city = TextBox(customer_window)
     city.width = 15
+
+    text = Text(customer_window, text= "Post Code")
+    text.text_color = "white"
+    post_code = TextBox(customer_window)
+    post_code.width = 15
 
     text = Text(customer_window, text= "Phone Number")
     text.text_color = "white"
@@ -109,7 +112,7 @@ def add_new_customer(customer_window, first_name, last_name, address1, address2,
     if FirstName == '' or Surname == '' or Email == '' or PhoneNumber == '' or Address1 == '' or Address2 == '' or City == '' or Postcode == '':
         print ("error")
     else:
-        cursor.execute(("""INSERT INTO Address(Address1, Address2, City, Postcode) VALUES(?, ?, ?, ?)"""),(Address1, Address2, City, Postcode))
+        cursor.execute(("""INSERT INTO Address(Address1, Address2, Postcode, City) VALUES(?, ?, ?, ?)"""),(Address1, Address2, City, Postcode))
         addressID = cursor.lastrowid
         print(addressID)
         cursor.execute(("""INSERT INTO Customer(AddressID, FirstName, Surname, Email, PhoneNumber, SpecialNotes) VALUES(?, ?, ?, ?, ?, ?)"""),(addressID, FirstName, Surname, Email, PhoneNumber, SpecialNotes))
@@ -178,10 +181,30 @@ def new_booking():
     home_button.text_color = "white"
 
 def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes):
+
     CustomerID = bookingCustomers_combo.value.split(' ', 1)[0]
     CustomerID = int(CustomerID)
-    print(type(CustomerID))
-    print(CustomerID)
+
+    DestinationID = bookingDestination_combo.value.split(' ', 1)[1]
+
+
+    SeatAmount = booking_seatNumber.value
+
+    BookingDate = datetime.today().strftime('%d/%m/%y')
+    print(BookingDate)
+
+    Notes = text_notes.value
+
+    cursor.execute("SELECT TripID FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (DestinationID,))
+    TripID = cursor.fetchall()
+    TripID = [item[0] for item in TripID]
+    TripID = int(TripID.pop(0))
+    print(TripID)
+
+
+
+    # cursor.execute("""INSERT INTO Booking(CustomerID, TripID, SeatAmount, BookingDate, Notes) VALUES(?,?,?,?,?)"""),(CustomerID, TripID, SeatAmount, BookingDate, Notes)
+
 
 def new_trip():
     trip_window = Window (app, title = "New Trip", bg = (253, 71, 74), height= 600)

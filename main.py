@@ -2,12 +2,19 @@ from guizero import *
 import sqlite3
 
 
-# with sqlite3.connect("Unit 18") as db:
-   #cursor = db.cursor()
+with sqlite3.connect("Silver Dawn Data.db") as db:
+   cursor = db.cursor()
 
+if (db):
+    # Carry out normal procedure
+    print ("Connection successful")
+else:
+    # Terminate
+    print ("Connection unsuccessful")
 
-
-
+res = cursor.execute("SELECT * FROM sqlite_master")
+for name in res:
+    print (name[1])
 
 
 def tickboxes():
@@ -50,6 +57,11 @@ def new_customer():
     post_code = TextBox(customer_window)
     post_code.width = 15
 
+    text = Text(customer_window, text= "City")
+    text.text_color = "white"
+    city = TextBox(customer_window)
+    city.width = 15
+
     text = Text(customer_window, text= "Phone Number")
     text.text_color = "white"
     phone_number = TextBox(customer_window)
@@ -57,8 +69,8 @@ def new_customer():
 
     text = Text(customer_window, text= "Email")
     text.text_color = "white"
-    phone_number = TextBox(customer_window)
-    phone_number.width = 30
+    email = TextBox(customer_window)
+    email.width = 30
 
     global requirements_checkbox
     global requirements_text
@@ -66,17 +78,37 @@ def new_customer():
     requirements_checkbox = CheckBox(customer_window, text="Special Requirements?", command=tickboxes)
     requirements_checkbox.text_color = "white"
 
-    requirements_text = TextBox(customer_window)
+    requirements_text = TextBox(customer_window, text="No Requirements")
     requirements_text.width = 25
     requirements_text.disable()
 
-    customer_button = PushButton(customer_window, text="Enter")
+    customer_button = PushButton(customer_window, text="Enter", command=add_new_customer, args=[customer_window, first_name, last_name, address1, address2, post_code, city, phone_number, email, requirements_text])
     customer_button.width = 15
     customer_button.text_color = "white"
 
     home_button = PushButton(customer_window, text="Home", align="bottom", command=customer_window.destroy)
     home_button.width = 6
     home_button.text_color = "white"
+
+
+def add_new_customer(customer_window, first_name, last_name, address1, address2, post_code, city, phone_number, email, requirements_text):
+    FirstName = first_name.value
+    Surname = last_name.value
+    Email = email.value
+    PhoneNumber = phone_number.value
+    SpecialNotes = requirements_text.value
+
+    Address1 = address1.value
+    Address2 = address2.value
+    City = city.value
+    Postcode = post_code.value
+
+    if FirstName == '' or Surname == '' or Email == '' or PhoneNumber == '' or Address1 == '' or Address2 == '' or City == '' or Postcode == '':
+        print ("error")
+    else:
+        cursor.execute(("""INSERT INTO Customer VALUES(?,?,?,?,?)"""),(FirstName, Surname, Email, PhoneNumber, SpecialNotes))
+
+
 
 
 def add_booking():

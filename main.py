@@ -106,7 +106,11 @@ def add_new_customer(customer_window, first_name, last_name, address1, address2,
     if FirstName == '' or Surname == '' or Email == '' or PhoneNumber == '' or Address1 == '' or Address2 == '' or City == '' or Postcode == '':
         print ("error")
     else:
-        cursor.execute(("""INSERT INTO Customer VALUES(?,?,?,?,?)"""),(FirstName, Surname, Email, PhoneNumber, SpecialNotes))
+        cursor.execute(("""INSERT INTO Address(Address1, Address2, City, Postcode) VALUES(?, ?, ?, ?)"""),(Address1, Address2, City, Postcode))
+        addressID = cursor.lastrowid
+        print(addressID)
+        cursor.execute(("""INSERT INTO Customer(AddressID, FirstName, Surname, Email, PhoneNumber, SpecialNotes) VALUES(?, ?, ?, ?, ?, ?)"""),(addressID, FirstName, Surname, Email, PhoneNumber, SpecialNotes))
+        db.commit()
 
 
 

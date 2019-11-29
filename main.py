@@ -30,7 +30,7 @@ def tickboxes():
         requirements_text.disable()
 
 def new_customer():
-    customer_window = Window(app, title = "Add Customer", bg = (253, 71, 74), height = 725)
+    customer_window = Window(app, title = "Add Customer", bg = (253, 71, 74), height = 750)
     picture = Picture(customer_window, image="Logo.gif")
 
     text = Text(customer_window, text= "New Customer")
@@ -125,6 +125,8 @@ def new_booking():
     showAllCustomers = []
     showAllDestinations = []
 
+    showAllDates = []
+
     cursor.execute("SELECT * FROM Customer")
     result = cursor.fetchall()
     for row in result:
@@ -137,7 +139,7 @@ def new_booking():
 
 
 
-    booking_window = Window (app, title = "Add Booking", bg = (253, 71, 74), height = 600)
+    booking_window = Window (app, title = "Add Booking", bg = (253, 71, 74), height = 750)
     picture = Picture(booking_window, image="Logo.gif")
 
     text = Text(booking_window, text="Add Booking")
@@ -151,11 +153,20 @@ def new_booking():
     bookingCustomers_combo = Combo(booking_window, options=showAllCustomers)
     bookingCustomers_combo.text_color = "white"
 
+    global bookingDestination_combo
+    global bookingDate_combo
+
     text = Text(booking_window, text="Search Destinations")
     text.text_color = "white"
-    bookingDestination_combo = Combo(booking_window, options=showAllDestinations)
+    bookingDestination_combo = Combo(booking_window, options=showAllDestinations, command=findBookingDates)
     bookingDestination_combo.text_color = "white"
 
+
+    text = Text(booking_window, text="Choose Date")
+    text.text_color = "white"
+    bookingDate_combo = Combo(booking_window, options=showAllDates)
+    bookingDate_combo.text_color = "white"
+    findBookingDates()
 
 
 
@@ -163,16 +174,20 @@ def new_booking():
     text.text_color = "white"
     booking_seatNumber = TextBox(booking_window)
     booking_seatNumber.width = 2
+    booking_seatNumber.text_color = "white"
 
     text = Text(booking_window, text="Notes")
     text.text_color = "white"
     text_notes = TextBox(booking_window, text="No Notes", multiline=True)
     text_notes.width = 25
     text_notes.height = 3
+    text_notes.text_color = "white"
 
 
 
-    booking_button = PushButton(booking_window, text="Enter", command=add_new_booking, args=[bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes])
+
+
+    booking_button = PushButton(booking_window, text="Enter", command=add_new_booking, args=[bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes, bookingDate_combo])
     booking_button.width = 15
     booking_button.text_color = "white"
 
@@ -180,7 +195,24 @@ def new_booking():
     home_button.width = 6
     home_button.text_color = "white"
 
-def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes):
+
+def findBookingDates():
+    DestinationID = bookingDestination_combo.value.split(' ', 1)[1]
+
+    cursor.execute("SELECT DateOfTrip FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (DestinationID,))
+    showAllDates = cursor.fetchall()
+    bookingDate_combo.clear()
+
+
+    showAllDates = [item[0] for item in showAllDates]
+    print(showAllDates)
+
+    datesArrayLength = len(showAllDates)
+    for i in range(datesArrayLength):
+        bookingDate_combo.append(showAllDates[i])
+
+
+def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes, bookingDate_combo):
 
     CustomerID = bookingCustomers_combo.value.split(' ', 1)[0] #Only takes the values before the first space which in this case is the ID
     CustomerID = int(CustomerID) #Converts CustomerID to an integer
@@ -190,14 +222,17 @@ def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_se
 
     SeatAmount = booking_seatNumber.value #Gets the value of the amount of seats the user has put in and then saves it as SeatAmount
 
+    findDate = bookingDate_combo.value
+
     BookingDate = datetime.today().strftime('%d/%m/%y') #Gets the current date of the computer and adds it as a variable.
 
     Notes = text_notes.value #Gets notes from user input and saves it as the variable Notes
 
-    cursor.execute("SELECT TripID FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (DestinationID,)) #Find the foreign key value for the destinationID inputed by the user that's being stored in the Trip Table and gets the primary key for the trip that they have requested
+    cursor.execute("SELECT TripID FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =? AND DateOfTrip =?", (DestinationID,findDate)) #Find the foreign key value for the destinationID inputed by the user that's being stored in the Trip Table and gets the primary key for the trip that they have requested
     TripID = cursor.fetchall() # Grabs the value entered
     TripID = [item[0] for item in TripID] #Only gets the first element in the array removing it from the tuple
     TripID = int(TripID.pop(0)) #Takes it out of the array and concatenates the value to an integer to be saved as the TripID for this booking
+
 
     cursor.execute(("""INSERT INTO Booking(CustomerID, TripID, SeatAmount, BookingDate, Notes) VALUES(?, ?, ?, ?, ?)"""),(CustomerID, TripID, SeatAmount, BookingDate, Notes)) #Inserts all the information above into the booking table.
     db.commit() #Saves the table

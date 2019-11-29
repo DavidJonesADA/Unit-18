@@ -334,18 +334,27 @@ def passenger_details():
     text.text_color = "white"
     text.text_size = 20
 
-    text = Text(details_window, text="Trips")
-    text.text_color = "white"
-    trips_combo = Combo(details_window, options=["a", "b", "c", "d"])
-    trips_combo.text_color = "white"
-
-    destination_button = PushButton(details_window, text="Enter")
+    destination_button = PushButton(details_window, text="Ok", command=details_window.destroy)
     destination_button.width = 15
     destination_button.text_color = "white"
 
-    back_button = PushButton(details_window, text="Back", align="bottom", command=details_window.destroy)
-    back_button.width = 6
-    back_button.text_color = "white"
+    cursor.execute("SELECT FirstName, Surname, SeatAmount FROM Customer INNER JOIN Booking on Booking.CustomerID =  Customer.CustomerID WHERE TripID = '8'")
+    query_passengers = cursor.fetchall()
+
+    query_passengers = str(query_passengers)
+
+
+    try:
+        with open('Passenger_Details.txt', 'w') as file:
+            file.write(query_passengers)
+        text = Text(details_window, text="File Created as \n query_passengers.txt")
+        text.text_color = "white"
+
+    except:
+        text = Text(details_window, text="Error, File Creation Unsuccessful")
+        text.text_color = "white"
+
+
 
 def all_trips():
     trips_window = Window(app, title="All Trips", bg = (253, 71, 74), width = 500, height = 400)
@@ -354,6 +363,20 @@ def all_trips():
     text = Text(trips_window, text="All Trips")
     text.text_color = "white"
     text.text_size = 20
+
+    cursor.execute("SELECT Town, DateOfTrip, CostPerPerson, Days FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID ORDER BY DateOfTrip")
+    query_all_trips = cursor.fetchall()
+    query_all_trips = str(query_all_trips)
+
+    try:
+        with open('all_trips.txt', 'w') as file:
+            file.write(query_all_trips)
+        text = Text(trips_window, text="File Created as \n all_trips.txt")
+        text.text_color = "white"
+
+    except:
+        text = Text(trips_window, text="Error, File Creation Unsuccessful")
+        text.text_color = "white"
 
     ok_button = PushButton(trips_window, text="Ok", command=trips_window.destroy)
     ok_button.text_color = "white"

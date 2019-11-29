@@ -407,6 +407,14 @@ def customer_addresses():
     ok_button.text_color = "white"
 
 def trip_income():
+    showAllDestinations = []
+
+    cursor.execute("SELECT * FROM Destination")
+    result = cursor.fetchall()
+    for row in result:
+       showAllDestinations.append(str(row[0]) + ' ' +  str(row[1]))
+
+
     income_window = Window (app, title = "Passenger Details", bg = (253, 71, 74))
     picture = Picture(income_window, image="Logo.gif")
 
@@ -416,17 +424,43 @@ def trip_income():
 
     text = Text(income_window, text="Trips")
     text.text_color = "white"
-    trips_combo = Combo(income_window, options=["a", "b", "c", "d"])
+    trips_combo = Combo(income_window, options=showAllDestinations)
     trips_combo.text_color = "white"
 
 
-    income_button = PushButton(income_window, text="Enter")
+
+
+    income_button = PushButton(income_window, text="Enter", command=get_trip_income, args=[trips_combo])
     income_button.width = 15
     income_button.text_color = "white"
 
     back_button = PushButton(income_window, text="Back", align="bottom", command=income_window.destroy)
     back_button.width = 6
     back_button.text_color = "white"
+
+def get_trip_income(trips_combo):
+
+    DestinationID = trips_combo.value.split(' ', 1)[1]
+    DestinationTown = trips_combo.value[2 : :]
+
+    cursor.execute("SELECT TripID FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (DestinationID,))
+    TripID = cursor.fetchall()
+    TripID = [item[0] for item in TripID]
+    TripID = int(TripID.pop(0))
+    print(TripID)
+
+    cursor.execute("SELECT SUM(SeatAmount) FROM BOOKING WHERE TripID = ?", (TripID,))
+    seatsSold = cursor.fetchall()
+    seatsSold = [item[0] for item in seatsSold]
+    seatsSold = int(seatsSold.pop(0))
+    print (seatsSold)
+
+    cursor.execute("SELECT TripID, CostPerPerson, SUM(CostPerPerson)*? FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (seatsSold, DestinationTown))
+    seatsSold = cursor.fetchall()
+    print (seatsSold)
+
+
+
 
 def query_data():
     query_window = Window (app, title = "Query Data", bg = (253, 71, 74), height = 550)
@@ -442,7 +476,7 @@ def query_data():
     submit.text_color = "white"
     submit = PushButton(query_window, text="Customer Addresses", command=customer_addresses)
     submit.text_color = "white"
-    submit = PushButton(query_window, text="Trip Income", command=passenger_details)
+    submit = PushButton(query_window, text="Trip Income", command=trip_income)
     submit.text_color = "white"
 
     home_button = PushButton(query_window, text="Home", align="bottom", command=query_window.destroy)

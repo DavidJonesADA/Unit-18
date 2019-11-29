@@ -389,6 +389,20 @@ def customer_addresses():
     text.text_color = "white"
     text.text_size = 20
 
+    cursor.execute("SELECT Address1, Address2, Postcode FROM Address WHERE Postcode LIKE 'E5%'")
+    query_addresses = cursor.fetchall()
+    query_addresses = str(query_addresses)
+
+    try:
+        with open('customer_addresses.txt', 'w') as file:
+            file.write(query_addresses)
+        text = Text(addresses_window, text="File Created as \n customer_addresses.txt")
+        text.text_color = "white"
+
+    except:
+        text = Text(addresses_window, text="Error, File Creation Unsuccessful")
+        text.text_color = "white"
+
     ok_button = PushButton(addresses_window, text="Ok", command=addresses_window.destroy)
     ok_button.text_color = "white"
 
@@ -404,6 +418,7 @@ def trip_income():
     text.text_color = "white"
     trips_combo = Combo(income_window, options=["a", "b", "c", "d"])
     trips_combo.text_color = "white"
+
 
     income_button = PushButton(income_window, text="Enter")
     income_button.width = 15

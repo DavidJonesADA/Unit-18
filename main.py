@@ -1,26 +1,38 @@
 from guizero import *
 import sqlite3
+import re
 from datetime import datetime
-
-
 
 
 with sqlite3.connect("Silver Dawn Data.db") as db:
    cursor = db.cursor()
 
 if (db):
-    # Carry out normal procedure
+    # Carry out database work
     print ("Connection successful")
 else:
-    # Terminate
+    # No connection to the database
     print ("Connection unsuccessful")
 
 res = cursor.execute("SELECT * FROM sqlite_master")
 for name in res:
     print (name[1])
 
+def successScreen():
+    success_window = Window(app, title="Success", bg = (253, 71, 74), height = 300)
+    text = Text(success_window, text="Success")
+    text.text_color = "white"
+    text.text_size = 20
 
+    success_button = PushButton(success_window, text="Ok", command=success_window.destroy)
 
+def errorScreen():
+    error_screen = Window(app, title="Error, unsuccessful", bg = (253, 71, 74), height = 300)
+    text = Text(error_screen, text="Error, unsuccessful \nplease check all fields")
+    text.text_color = "white"
+    text.text_size = 20
+
+    error_button = PushButton(error_screen, text="Ok", command=error_screen.destroy)
 
 
 def tickboxes():
@@ -33,9 +45,12 @@ def new_customer():
     customer_window = Window(app, title = "Add Customer", bg = (253, 71, 74), height = 750)
     picture = Picture(customer_window, image="Logo.gif")
 
-    text = Text(customer_window, text= "New Customer")
+
+
+    text = Text(customer_window, text="New Customer")
     text.text_color = "white"
     text.text_size = 20
+
 
     text = Text(customer_window, text= "First Name")
     text.text_color = "white"
@@ -97,28 +112,51 @@ def new_customer():
     home_button.text_color = "white"
 
 
+def validEmail(email):
+
+    regex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+
+    if(re.search(regex,email)):
+        return True
+
+
+    else:
+        return False
+
 def add_new_customer(customer_window, first_name, last_name, address1, address2, post_code, city, phone_number, email, requirements_text):
+
+
+    print(first_name.value)
     FirstName = first_name.value
     Surname = last_name.value
     Email = email.value
     PhoneNumber = phone_number.value
     SpecialNotes = requirements_text.value
 
+
     Address1 = address1.value
     Address2 = address2.value
     City = city.value
     Postcode = post_code.value
+    #<-- Validation -->
 
-    if FirstName == '' or Surname == '' or Email == '' or PhoneNumber == '' or Address1 == '' or Address2 == '' or City == '' or Postcode == '':
-        print ("error")
-    else:
+    checkEmail = validEmail(Email)
+
+    if checkEmail:
+        print("Valid Email")
+    elif checkEmail == False:
+        text = Text(customer_window, text= "")
+        text.text_color = "white"
+    try:
         cursor.execute(("""INSERT INTO Address(Address1, Address2, Postcode, City) VALUES(?, ?, ?, ?)"""),(Address1, Address2, City, Postcode))
         addressID = cursor.lastrowid
         print(addressID)
         cursor.execute(("""INSERT INTO Customer(AddressID, FirstName, Surname, Email, PhoneNumber, SpecialNotes) VALUES(?, ?, ?, ?, ?, ?)"""),(addressID, FirstName, Surname, Email, PhoneNumber, SpecialNotes))
+
         db.commit()
-
-
+        successScreen()
+    except:
+        errorScreen()
 
 
 def new_booking():
@@ -136,6 +174,7 @@ def new_booking():
     for row in result2:
        showAllDestinations.append(str(row[0]) + ' ' +  str(row[1]))
 
+    print(showAllCustomers)
 
 
 
@@ -236,7 +275,6 @@ def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_se
 
     cursor.execute(("""INSERT INTO Booking(CustomerID, TripID, SeatAmount, BookingDate, Notes) VALUES(?, ?, ?, ?, ?)"""),(CustomerID, TripID, SeatAmount, BookingDate, Notes)) #Inserts all the information above into the booking table.
     db.commit() #Saves the table
-
 
 
 
@@ -376,12 +414,15 @@ def passenger_details():
     cursor.execute("SELECT FirstName, Surname, SeatAmount FROM Customer INNER JOIN Booking on Booking.CustomerID =  Customer.CustomerID WHERE TripID = '8'")
     query_passengers = cursor.fetchall()
 
-    query_passengers = str(query_passengers)
-
+    print(query_passengers)
 
     try:
         with open('Passenger_Details.txt', 'w') as file:
-            file.write(query_passengers)
+            row = ("First Name | Surname | Amount of Seats \n\n")
+            file.write(row)
+            for result in query_passengers:
+                row = ("%s | %s | %d \n " % (result[0], result[1], result[2]))
+                file.write(row)
         text = Text(details_window, text="File Created as \n query_passengers.txt")
         text.text_color = "white"
 
@@ -401,11 +442,15 @@ def all_trips():
 
     cursor.execute("SELECT Town, DateOfTrip, CostPerPerson, Days FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID ORDER BY DateOfTrip")
     query_all_trips = cursor.fetchall()
-    query_all_trips = str(query_all_trips)
+
 
     try:
         with open('all_trips.txt', 'w') as file:
-            file.write(query_all_trips)
+            row = ("Town | Date Of Trip | Cost Per Person | Amount Of Days \n \n")
+            file.write(row)
+            for result in query_all_trips:
+                row = ("%s | %s | %s | %s \n \n" % (result[0], result[1], result[2], result[3]))
+                file.write(row)
         text = Text(trips_window, text="File Created as \n all_trips.txt")
         text.text_color = "white"
 
@@ -424,13 +469,18 @@ def customer_addresses():
     text.text_color = "white"
     text.text_size = 20
 
-    cursor.execute("SELECT Address1, Address2, Postcode FROM Address WHERE Postcode LIKE 'E5%'")
+    cursor.execute("SELECT Customer.FirstName, Customer.Surname, Address1, Address2, Postcode FROM Address INNER JOIN Customer ON Customer.AddressID = Address.AddressID WHERE Postcode LIKE 'E5%'")
     query_addresses = cursor.fetchall()
-    query_addresses = str(query_addresses)
+
+
 
     try:
         with open('customer_addresses.txt', 'w') as file:
-            file.write(query_addresses)
+            row = ('First Name | Surname | Address Line 1 | Address Line 2 \n \n')
+            file.write(row)
+            for result in query_addresses:
+                row =  ("%s | %s | %s | %s \n \n" % (result[0], result[1], result[2], result[3]))
+                file.write(row)
         text = Text(addresses_window, text="File Created as \n customer_addresses.txt")
         text.text_color = "white"
 
@@ -449,7 +499,7 @@ def trip_income():
     for row in result:
        showAllDestinations.append(str(row[0]) + ' ' +  str(row[1]))
 
-
+    global income_window
     income_window = Window (app, title = "Passenger Details", bg = (253, 71, 74))
     picture = Picture(income_window, image="Logo.gif")
 
@@ -492,7 +542,7 @@ def get_trip_income(trips_combo):
 
     cursor.execute("SELECT TripID, CostPerPerson, SUM(CostPerPerson)*? FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (seatsSold, DestinationTown))
     seatsSold = cursor.fetchall()
-    print (seatsSold)
+    result = Text(income_window, text=seatsSold)
 
 
 

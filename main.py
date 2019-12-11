@@ -14,10 +14,6 @@ else:
     # No connection to the database
     print ("Connection unsuccessful")
 
-res = cursor.execute("SELECT * FROM sqlite_master")
-for name in res:
-    print (name[1])
-
 def successScreen():
     success_window = Window(app, title="Success", bg = (253, 71, 74), height = 300)
     text = Text(success_window, text="Success")
@@ -236,7 +232,7 @@ def new_booking():
 
 
 def findBookingDates():
-    DestinationID = bookingDestination_combo.value.split(' ', 1)[1]
+    DestinationID = bookingDestination_combo.value.split(' ', 1)[1] #Takes the global variable of the
 
     cursor.execute("SELECT DateOfTrip FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (DestinationID,))
     showAllDates = cursor.fetchall()
@@ -493,11 +489,13 @@ def customer_addresses():
 
 def trip_income():
     showAllDestinations = []
+    showIncomeDates = []
 
     cursor.execute("SELECT * FROM Destination")
     result = cursor.fetchall()
     for row in result:
-       showAllDestinations.append(str(row[0]) + ' ' +  str(row[1]))
+       showAllDestinations.append(str(row[0]) + ' ' + str(row[1]))
+
 
     global income_window
     income_window = Window (app, title = "Passenger Details", bg = (253, 71, 74))
@@ -509,13 +507,28 @@ def trip_income():
 
     text = Text(income_window, text="Trips")
     text.text_color = "white"
-    trips_combo = Combo(income_window, options=showAllDestinations)
+
+    text = Text(income_window, text="Choose a Destination")
+    text.text_color = "white"
+    global trips_combo
+    trips_combo = Combo(income_window, options=showAllDestinations, command=get_trip_dates)
     trips_combo.text_color = "white"
 
+    global income_dates
+
+    income_dates = Combo(income_window, options=showIncomeDates)
+    income_dates.text_color = "white"
 
 
 
-    income_button = PushButton(income_window, text="Enter", command=get_trip_income, args=[trips_combo])
+    trip_income_box = TextBox(income_window, text="Choose a Destination")
+    trip_income_box.width = 22
+    trip_income_box.text_color = "white"
+
+    get_trip_dates()
+
+
+    income_button = PushButton(income_window, text="Enter", command=get_trip_income, args=[trips_combo,trip_income_box,income_dates])
     income_button.width = 15
     income_button.text_color = "white"
 
@@ -523,26 +536,59 @@ def trip_income():
     back_button.width = 6
     back_button.text_color = "white"
 
-def get_trip_income(trips_combo):
+def get_trip_dates():
+    print(trips_combo.value)
 
-    DestinationID = trips_combo.value.split(' ', 1)[1]
-    DestinationTown = trips_combo.value[2 : :]
+    DestinationTown = trips_combo.value.split(' ', 1)[1:]
+    DestinationTown = ''.join(DestinationTown)
 
-    cursor.execute("SELECT TripID FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (DestinationID,))
+    cursor.execute("SELECT DateOfTrip FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (DestinationTown,))
+    showAllDates = cursor.fetchall()
+    income_dates.clear()
+
+
+    showAllDates = [item[0] for item in showAllDates]
+    print(showAllDates)
+
+    datesArrayLength = len(showAllDates)
+    for i in range(datesArrayLength):
+        income_dates.append(showAllDates[i])
+
+def get_trip_income(trips_combo,trip_income_box,income_dates):
+
+
+    DestinationID = trips_combo.value.split(' ', 1)[:1]
+    DestinationID = ''.join(DestinationID)
+
+    DestinationTown = trips_combo.value.split(' ', 1)[1:]
+    DestinationTown = ''.join(DestinationTown)
+    selectDate = income_dates.value
+
+
+    cursor.execute("SELECT TripID FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =? AND DateOfTrip =?", (DestinationTown,selectDate))
     TripID = cursor.fetchall()
     TripID = [item[0] for item in TripID]
     TripID = int(TripID.pop(0))
     print(TripID)
 
-    cursor.execute("SELECT SUM(SeatAmount) FROM BOOKING WHERE TripID = ?", (TripID,))
-    seatsSold = cursor.fetchall()
-    seatsSold = [item[0] for item in seatsSold]
-    seatsSold = int(seatsSold.pop(0))
-    print (seatsSold)
+    try:
+        cursor.execute("SELECT SUM(SeatAmount) FROM BOOKING WHERE TripID = ?", (TripID,))
+        seatsSold = cursor.fetchall()
+        seatsSold = [item[0] for item in seatsSold]
+        seatsSold = int(seatsSold.pop(0))
+    except:
+        trip_income_box.clear()
+        trip_income_box.value = 'No correlating bookings!'
+        return
 
-    cursor.execute("SELECT TripID, CostPerPerson, SUM(CostPerPerson)*? FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (seatsSold, DestinationTown))
+    cursor.execute("SELECT SUM(CostPerPerson)*? FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (seatsSold, DestinationTown))
     seatsSold = cursor.fetchall()
-    result = Text(income_window, text=seatsSold)
+
+    seatsSold = ''.join(str(e) for e in [item[0] for item in seatsSold])
+    seatsSold = '£' + seatsSold
+
+    trip_income_box.clear()
+    trip_income_box.value = seatsSold
 
 
 

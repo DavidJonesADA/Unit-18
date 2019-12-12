@@ -557,9 +557,6 @@ def get_trip_dates():
 def get_trip_income(trips_combo,trip_income_box,income_dates):
 
 
-    DestinationID = trips_combo.value.split(' ', 1)[:1]
-    DestinationID = ''.join(DestinationID)
-
     DestinationTown = trips_combo.value.split(' ', 1)[1:]
     DestinationTown = ''.join(DestinationTown)
     selectDate = income_dates.value

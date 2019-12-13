@@ -38,79 +38,79 @@ def tickboxes():
         requirements_text.disable()
 
 def new_customer():
-    customer_window = Window(app, title = "Add Customer", bg = (253, 71, 74), height = 750)
-    picture = Picture(customer_window, image="Logo.gif")
+    customer_window = Window(app, title = "Add Customer", bg = (253, 71, 74), height = 750, layout="grid")
+    picture = Picture(customer_window, image="Logo.gif", grid=[0,0])
 
 
 
-    text = Text(customer_window, text="New Customer")
+    text = Text(customer_window, text="New Customer", grid=[0,1])
     text.text_color = "white"
-    text.text_size = 20
+    text.text_size = 25
 
 
-    text = Text(customer_window, text= "First Name")
+    text = Text(customer_window, text= "First Name", grid=[0,2])
     text.text_color = "white"
-    first_name = TextBox(customer_window)
-    first_name.width = 15
+    first_name = TextBox(customer_window, grid=[1,2])
+    first_name.width = 25
 
-    text = Text(customer_window, text= "Last Name")
+    text = Text(customer_window, text= "Last Name", grid=[0,3])
     text.text_color = "white"
-    last_name = TextBox(customer_window)
-    last_name.width = 15
+    last_name = TextBox(customer_window, grid=[1,3])
+    last_name.width = 25
 
 
-    text = Text(customer_window, text= "Address 1")
+    text = Text(customer_window, text= "Address 1", grid=[0,4])
     text.text_color = "white"
-    address1 = TextBox(customer_window)
-    address1.width = 40
+    address1 = TextBox(customer_window, grid=[1,4])
+    address1.width = 25
 
-    text = Text(customer_window, text= "Address 2")
+    text = Text(customer_window, text= "Address 2", grid=[0,5])
     text.text_color = "white"
-    address2 = TextBox(customer_window)
-    address2.width = 40
+    address2 = TextBox(customer_window, grid=[1,5])
+    address2.width = 25
 
-    text = Text(customer_window, text= "City")
+    text = Text(customer_window, text= "City", grid=[0,6])
     text.text_color = "white"
-    city = TextBox(customer_window)
-    city.width = 15
+    city = TextBox(customer_window, grid=[1,6])
+    city.width = 25
 
-    text = Text(customer_window, text= "Post Code")
+    text = Text(customer_window, text= "Post Code", grid=[0,7])
     text.text_color = "white"
-    post_code = TextBox(customer_window)
-    post_code.width = 15
+    post_code = TextBox(customer_window, grid=[1,7])
+    post_code.width = 25
 
-    text = Text(customer_window, text= "Phone Number")
+    text = Text(customer_window, text= "Phone Number", grid=[0,8])
     text.text_color = "white"
-    phone_number = TextBox(customer_window)
+    phone_number = TextBox(customer_window, grid=[1,8])
     phone_number.width = 25
 
-    text = Text(customer_window, text= "Email")
+    text = Text(customer_window, text= "Email", grid=[0,9])
     text.text_color = "white"
-    email = TextBox(customer_window)
-    email.width = 30
+    email = TextBox(customer_window, grid=[1,9])
+    email.width = 25
 
     global requirements_checkbox
     global requirements_text
 
-    requirements_checkbox = CheckBox(customer_window, text="Special Requirements?", command=tickboxes)
+    requirements_checkbox = CheckBox(customer_window, text="Special Requirements?", command=tickboxes, grid=[0,10])
     requirements_checkbox.text_color = "white"
 
-    requirements_text = TextBox(customer_window, text="No Requirements")
+    requirements_text = TextBox(customer_window, text="No Requirements", grid=[1,10])
     requirements_text.width = 25
     requirements_text.disable()
 
-    customer_button = PushButton(customer_window, text="Enter", command=add_new_customer, args=[customer_window, first_name, last_name, address1, address2, post_code, city, phone_number, email, requirements_text])
+    customer_button = PushButton(customer_window, text="Add Customer", command=add_new_customer, args=[customer_window, first_name, last_name, address1, address2, post_code, city, phone_number, email, requirements_text], grid=[0,11])
     customer_button.width = 15
     customer_button.text_color = "white"
 
-    home_button = PushButton(customer_window, text="Home", align="bottom", command=customer_window.destroy)
+    home_button = PushButton(customer_window, text="Home", align="bottom", command=customer_window.destroy, grid=[0,12])
     home_button.width = 6
     home_button.text_color = "white"
 
 
 def validEmail(email):
 
-    regex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
+    regex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)" #Uses regex formula to find if entered email is valid against spec.
 
     if(re.search(regex,email)):
         return True
@@ -136,13 +136,24 @@ def add_new_customer(customer_window, first_name, last_name, address1, address2,
     Postcode = post_code.value
     #<-- Validation -->
 
-    checkEmail = validEmail(Email)
+    checkEmail = validEmail(Email) #Checks with regex with entered email is correct.
 
-    if checkEmail:
+    if checkEmail: #This will check if the email is correct otherwise it will return an error saying it is not allowed.
         print("Valid Email")
     elif checkEmail == False:
-        text = Text(customer_window, text= "")
+        text = Text(customer_window, text= "Error, please enter a valid email", grid=[0,13])
         text.text_color = "white"
+        return
+
+    if FirstName == '' or Surname == '' or Email == '' or PhoneNumber == '' or Address1 == '' or Address2 == '' or City == '' or Postcode == '':
+        errorScreen()
+        return
+
+    if type(PhoneNumber) != int:
+        text = Text(customer_window, text= "Error, please enter a valid phone number", grid=[0,13])
+        text.text_color = "white"
+        return
+
     try:
         cursor.execute(("""INSERT INTO Address(Address1, Address2, Postcode, City) VALUES(?, ?, ?, ?)"""),(Address1, Address2, City, Postcode))
         addressID = cursor.lastrowid
@@ -623,14 +634,19 @@ picture = Picture(app, image="Logo.gif")
 
 
 submit = PushButton(app, text="Add Customer", command=new_customer)
+submit.width = 10
 submit.text_color = "white"
 submit = PushButton(app, text="Book Coach", command=new_booking)
+submit.width = 10
 submit.text_color = "white"
 submit = PushButton(app, text="Add Trip", command=new_trip)
+submit.width = 10
 submit.text_color = "white"
 submit = PushButton(app, text="Add Destination", command=new_destination)
+submit.width = 10
 submit.text_color = "white"
 submit = PushButton(app, text="Query Database", command=query_data)
+submit.width = 10
 submit.text_color = "white"
 
 exit_button = PushButton(app, text="Exit", align="bottom", command=app.destroy)

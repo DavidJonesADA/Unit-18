@@ -14,6 +14,9 @@ else:
     # No connection to the database
     print ("Connection unsuccessful")
 
+
+
+#Success screen will be presented if data has been entered successfully into the database.
 def successScreen():
     success_window = Window(app, title="Success", bg = (253, 71, 74), height = 300)
     text = Text(success_window, text="Success")
@@ -22,6 +25,7 @@ def successScreen():
 
     success_button = PushButton(success_window, text="Ok", command=success_window.destroy)
 
+#Error screen will be presented if data has unsuccessfully been entered into the database.
 def errorScreen():
     error_screen = Window(app, title="Error, unsuccessful", bg = (253, 71, 74), height = 300)
     text = Text(error_screen, text="Error, unsuccessful \nplease check all fields")
@@ -31,12 +35,14 @@ def errorScreen():
     error_button = PushButton(error_screen, text="Ok", command=error_screen.destroy)
 
 
+#Changes the state of the checkbox if it has been changed and will make the special requirements box accessible accordingly.
 def tickboxes():
     if requirements_checkbox.value == 1:
         requirements_text.enable()
     elif requirements_checkbox.value == 0:
         requirements_text.disable()
 
+#Allows for a new customer to be entered into the database.
 def new_customer():
     customer_window = Window(app, title = "Add Customer", bg = (253, 71, 74), height = 750, layout="grid")
     picture = Picture(customer_window, image="Logo.gif", grid=[0,0])
@@ -107,7 +113,7 @@ def new_customer():
     home_button.width = 6
     home_button.text_color = "white"
 
-
+#Checks if the entered email is valid.
 def validEmail(email):
 
     regex = "(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)" #Uses regex formula to find if entered email is valid against spec.
@@ -119,10 +125,11 @@ def validEmail(email):
     else:
         return False
 
+#Will attempt to add a new customer to the database itself.
 def add_new_customer(customer_window, first_name, last_name, address1, address2, post_code, city, phone_number, email, requirements_text):
 
 
-    print(first_name.value)
+
     FirstName = first_name.value
     Surname = last_name.value
     Email = email.value
@@ -136,20 +143,20 @@ def add_new_customer(customer_window, first_name, last_name, address1, address2,
     Postcode = post_code.value
     #<-- Validation -->
 
-    checkEmail = validEmail(Email) #Checks with regex with entered email is correct.
-
-    if checkEmail: #This will check if the email is correct otherwise it will return an error saying it is not allowed.
-        print("Valid Email")
-    elif checkEmail == False:
-        text = Text(customer_window, text= "Error, please enter a valid email", grid=[0,13])
-        text.text_color = "white"
-        return
-
     if FirstName == '' or Surname == '' or Email == '' or PhoneNumber == '' or Address1 == '' or Address2 == '' or City == '' or Postcode == '':
         errorScreen()
         return
 
-    if type(PhoneNumber) != int:
+    checkEmail = validEmail(Email) #Checks with regex with entered email is correct.
+
+    if checkEmail == False:
+        text = Text(customer_window, text= "Error, please enter a valid email", grid=[0,13])
+        text.text_color = "white"
+        return
+
+    try:
+        PhoneNumber = int(PhoneNumber)
+    except:
         text = Text(customer_window, text= "Error, please enter a valid phone number", grid=[0,13])
         text.text_color = "white"
         return
@@ -160,12 +167,12 @@ def add_new_customer(customer_window, first_name, last_name, address1, address2,
         print(addressID)
         cursor.execute(("""INSERT INTO Customer(AddressID, FirstName, Surname, Email, PhoneNumber, SpecialNotes) VALUES(?, ?, ?, ?, ?, ?)"""),(addressID, FirstName, Surname, Email, PhoneNumber, SpecialNotes))
 
-        db.commit()
+        db.commit() #Successfully inputs all the data into the database from the add customer menu.
         successScreen()
     except:
         errorScreen()
 
-
+#Allows silver dawn staff to create new bookings for existing customers in the database.
 def new_booking():
     showAllCustomers = []
     showAllDestinations = []
@@ -216,7 +223,7 @@ def new_booking():
 
 
 
-    text = Text(booking_window, text="Number of seats required")
+    text = Text(booking_window, text="Number of seats required (1-10)")
     text.text_color = "white"
     booking_seatNumber = TextBox(booking_window)
     booking_seatNumber.width = 2
@@ -242,6 +249,7 @@ def new_booking():
     home_button.text_color = "white"
 
 
+#Finds the corresponding booking dates for all the trips, useful for when there are destinations with multiple dates.
 def findBookingDates():
     DestinationID = bookingDestination_combo.value.split(' ', 1)[1] #Takes the global variable of the
 
@@ -257,7 +265,7 @@ def findBookingDates():
     for i in range(datesArrayLength):
         bookingDate_combo.append(showAllDates[i])
 
-
+#Attempts to add a new booking to the database.
 def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_seatNumber, text_notes, bookingDate_combo):
 
     CustomerID = bookingCustomers_combo.value.split(' ', 1)[0] #Only takes the values before the first space which in this case is the ID
@@ -266,26 +274,36 @@ def add_new_booking(bookingCustomers_combo, bookingDestination_combo, booking_se
     DestinationID = bookingDestination_combo.value.split(' ', 1)[1] #Only takes the values after the first space which in this case is the Destination Town
 
 
-    SeatAmount = booking_seatNumber.value #Gets the value of the amount of seats the user has put in and then saves it as SeatAmount
+    SeatAmount = int(booking_seatNumber.value) #Gets the value of the amount of seats the user has put in and then saves it as SeatAmount
+    if SeatAmount < 0 or SeatAmount > 10:
+        errorScreen()
+        return
+
 
     findDate = bookingDate_combo.value
 
-    BookingDate = datetime.today().strftime('%d/%m/%y') #Gets the current date of the computer and adds it as a variable.
+    BookingDate = datetime.today().strftime('%Y/%m/%d') #Gets the current date of the computer and adds it as a variable.
 
     Notes = text_notes.value #Gets notes from user input and saves it as the variable Notes
+
 
     cursor.execute("SELECT TripID FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =? AND DateOfTrip =?", (DestinationID,findDate)) #Find the foreign key value for the destinationID inputed by the user that's being stored in the Trip Table and gets the primary key for the trip that they have requested
     TripID = cursor.fetchall() # Grabs the value entered
     TripID = [item[0] for item in TripID] #Only gets the first element in the array removing it from the tuple
     TripID = int(TripID.pop(0)) #Takes it out of the array and concatenates the value to an integer to be saved as the TripID for this booking
 
+    try:
+        cursor.execute(("""INSERT INTO Booking(CustomerID, TripID, SeatAmount, BookingDate, Notes) VALUES(?, ?, ?, ?, ?)"""),(CustomerID, TripID, SeatAmount, BookingDate, Notes)) #Inserts all the information above into the booking table.
+        db.commit() #Successfully saves data into the database.
+        successScreen()
+        return
+    except:
+        errorScreen()
+        return
 
-    cursor.execute(("""INSERT INTO Booking(CustomerID, TripID, SeatAmount, BookingDate, Notes) VALUES(?, ?, ?, ?, ?)"""),(CustomerID, TripID, SeatAmount, BookingDate, Notes)) #Inserts all the information above into the booking table.
-    db.commit() #Saves the table
 
 
-
-
+#Creates a new trip for silver dawn coaches.
 def new_trip():
     showAllCoaches = []
     showAllDrivers = []
@@ -352,6 +370,7 @@ def new_trip():
     home_button.width = 6
     home_button.text_color = "white"
 
+#Attempts to add the new trip.
 def add_new_trip(trip_cost, trip_dateOfTrip, trip_days, tripDestination_combo, coach_combo, driver_combo):
     CostPerPerson = trip_cost.value
     DateOfTrip = trip_dateOfTrip.value
@@ -365,13 +384,19 @@ def add_new_trip(trip_cost, trip_dateOfTrip, trip_days, tripDestination_combo, c
     DriverID = driver_combo.value.split(' ', 1)[0] # Only takes in the values before the first space in the string to get the DriverID
     DriverID = int(DriverID) # Converts DriverID to integer
 
-    cursor.execute(("""INSERT INTO Trip(CostPerPerson, DateOfTrip, Days, DestinationID, CoachID, DriverID) VALUES(?, ?, ?, ?, ?, ?)"""),(CostPerPerson, DateOfTrip, Days, DestinationID, CoachID, DriverID)) #Inserts all the information above into the booking table.
-    db.commit() #Saves the table
+
+    try:
+        cursor.execute(("""INSERT INTO Trip(CostPerPerson, DateOfTrip, Days, DestinationID, CoachID, DriverID) VALUES(?, ?, ?, ?, ?, ?)"""),(CostPerPerson, DateOfTrip, Days, DestinationID, CoachID, DriverID)) #Inserts all the information above into the booking table.
+        db.commit() #Adds trip to the database.
+        successScreen()
+    except:
+        errorScreen()
+        return
 
 
 
 
-
+#Allows for silver dawn to create new destinations for future trips to visit.
 def new_destination():
     destination_window = Window(app, title = "Add Destination", bg = (253, 71, 74))
     picture = Picture(destination_window, image="Logo.gif")
@@ -399,13 +424,20 @@ def new_destination():
     home_button.width = 6
     home_button.text_color = "white"
 
+#Attempts to the trip to the database.
 def add_new_destination(destination_town, destination_hotel):
     Town = destination_town.value
     Hotel = destination_hotel.value
 
-    cursor.execute(("""INSERT INTO Destination(Town, Hotel) VALUES(?, ?)"""), (Town, Hotel))
-    db.commit()
+    try:
+        cursor.execute(("""INSERT INTO Destination(Town, Hotel) VALUES(?, ?)"""), (Town, Hotel))
+        db.commit() #Successfully adds a new destination to the destination table in the database.
+        successScreen()
+    except:
+        errorScreen()
+        return
 
+#Queries the passenger details
 def passenger_details():
     details_window = Window (app, title = "Passenger Details", bg = (253, 71, 74))
     picture = Picture(details_window, image="Logo.gif")
@@ -421,10 +453,9 @@ def passenger_details():
     cursor.execute("SELECT FirstName, Surname, SeatAmount FROM Customer INNER JOIN Booking on Booking.CustomerID =  Customer.CustomerID WHERE TripID = '8'")
     query_passengers = cursor.fetchall()
 
-    print(query_passengers)
 
     try:
-        with open('Passenger_Details.txt', 'w') as file:
+        with open('query_passengers.txt', 'w') as file: #Saves to the file
             row = ("First Name | Surname | Amount of Seats \n\n")
             file.write(row)
             for result in query_passengers:
@@ -438,7 +469,7 @@ def passenger_details():
         text.text_color = "white"
 
 
-
+#Finds all trips and puts in date order.
 def all_trips():
     trips_window = Window(app, title="All Trips", bg = (253, 71, 74), width = 500, height = 400)
     picture = Picture(trips_window, image="Logo.gif")
@@ -468,6 +499,7 @@ def all_trips():
     ok_button = PushButton(trips_window, text="Ok", command=trips_window.destroy)
     ok_button.text_color = "white"
 
+#Gets all customer addresses.
 def customer_addresses():
     addresses_window = Window(app, title="Customer Addresses", bg = (253, 71, 74), width = 500, height = 400)
     picture = Picture(addresses_window, image="Logo.gif")
@@ -482,11 +514,11 @@ def customer_addresses():
 
 
     try:
-        with open('customer_addresses.txt', 'w') as file:
-            row = ('First Name | Surname | Address Line 1 | Address Line 2 \n \n')
+        with open('customer_addresses.txt', 'w') as file: #Saves to file.
+            row = ('First Name | Surname | Address Line 1 | Address Line 2 | Postcode \n \n')
             file.write(row)
             for result in query_addresses:
-                row =  ("%s | %s | %s | %s \n \n" % (result[0], result[1], result[2], result[3]))
+                row =  ("%s | %s | %s | %s | %s \n \n" % (result[0], result[1], result[2], result[3], result[4]))
                 file.write(row)
         text = Text(addresses_window, text="File Created as \n customer_addresses.txt")
         text.text_color = "white"
@@ -498,6 +530,7 @@ def customer_addresses():
     ok_button = PushButton(addresses_window, text="Ok", command=addresses_window.destroy)
     ok_button.text_color = "white"
 
+#Allows the staff members to find the sum of the amount of seats booked for any trip.
 def trip_income():
     showAllDestinations = []
     showIncomeDates = []
@@ -547,6 +580,7 @@ def trip_income():
     back_button.width = 6
     back_button.text_color = "white"
 
+#Gets all of the trip dates.
 def get_trip_dates():
     print(trips_combo.value)
 
@@ -565,6 +599,7 @@ def get_trip_dates():
     for i in range(datesArrayLength):
         income_dates.append(showAllDates[i])
 
+#Generates the trip income.
 def get_trip_income(trips_combo,trip_income_box,income_dates):
 
 
@@ -580,7 +615,7 @@ def get_trip_income(trips_combo,trip_income_box,income_dates):
     print(TripID)
 
     try:
-        cursor.execute("SELECT SUM(SeatAmount) FROM BOOKING WHERE TripID = ?", (TripID,))
+        cursor.execute("SELECT SUM(SeatAmount) FROM BOOKING WHERE TripID = ?", (TripID,)) #Finds the amount of seats sold
         seatsSold = cursor.fetchall()
         seatsSold = [item[0] for item in seatsSold]
         seatsSold = int(seatsSold.pop(0))
@@ -589,7 +624,7 @@ def get_trip_income(trips_combo,trip_income_box,income_dates):
         trip_income_box.value = 'No correlating bookings!'
         return
 
-    cursor.execute("SELECT SUM(CostPerPerson)*? FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (seatsSold, DestinationTown))
+    cursor.execute("SELECT SUM(CostPerPerson)*? FROM Trip INNER JOIN Destination on Destination.DestinationID = Trip.DestinationID WHERE Town =?", (seatsSold, DestinationTown)) #Multiplies the amount of seats sold to the destination town
     seatsSold = cursor.fetchall()
 
     seatsSold = ''.join(str(e) for e in [item[0] for item in seatsSold])
@@ -600,7 +635,7 @@ def get_trip_income(trips_combo,trip_income_box,income_dates):
 
 
 
-
+#Creates the query data menu allowing Mike and his staff to select  any query they need.
 def query_data():
     query_window = Window (app, title = "Query Data", bg = (253, 71, 74), height = 550)
     picture = Picture(query_window, image="Logo.gif")
@@ -622,7 +657,7 @@ def query_data():
     home_button.width = 6
     home_button.text_color = "white"
 
-
+#Creates the homescreen app for Mike and his staff members to add data to the database or query the database.
 app = App(title='Silver Dawn Coaches', height=550, bg = (253, 71, 74))
 
 text = Text(app, text="Silver Dawn Coaches Customer Software")
@@ -649,6 +684,6 @@ submit = PushButton(app, text="Query Database", command=query_data)
 submit.width = 10
 submit.text_color = "white"
 
-exit_button = PushButton(app, text="Exit", align="bottom", command=app.destroy)
+exit_button = PushButton(app, text="Exit", align="bottom", command=app.destroy) #Closes the program.
 exit_button.width = 6
 exit_button.text_color = "white"
